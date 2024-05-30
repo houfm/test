@@ -1,41 +1,35 @@
 pipeline {
     agent any
-    stages{
-        stage('Build'){
+    stages {
+        stage('Build') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                bat 'mvn -B -DskipTests clean package'
             }
         }
-        stage('Test'){
+        stage('pmd') {
             steps {
-                sh 'mvn test'
+                bat 'mvn clean install -DskipTests'
+                bat 'mvn pmd:pmd'
             }
         }
-        stage('PMD'){
+        stage('Doc') {
             steps {
-                sh 'mvn clean install -U'
-                sh 'mvn pmd:pmd'
+                bat 'mvn javadoc:jar'
             }
         }
-        stage('Surfire'){
+        stage('Test Report') {
             steps {
-                sh 'mvn surefire-report:report'
-            }
-        }
-        stage('Javadoc'){
-            steps {
-                sh 'mvn site --fail-never'
-                sh 'mvn javadoc:javadoc --fail-never'
-                sh 'mvn javadoc:jar --fail-never'
+                bat 'mvn test'
             }
         }
     }
-
     post {
-        always{
+        always {
             archiveArtifacts artifacts: '**/target/site/**', fingerprint: true
             archiveArtifacts artifacts: '**/target/**/*.jar', fingerprint: true
             archiveArtifacts artifacts: '**/target/**/*.war', fingerprint: true
+
+            archiveArtifacts artifacts: '**/target/custom-surefire-reports/**', fingerprint: true
         }
     }
 }
